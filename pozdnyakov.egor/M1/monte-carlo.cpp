@@ -1,7 +1,6 @@
 #include "monte-carlo.hpp"
 #include <algorithm>
 #include <cstddef>
-#include <cstdint>
 #include <functional>
 #include <random>
 #include <thread>
@@ -17,29 +16,20 @@ namespace
     std::size_t intersected;
   };
 
-  using engine_t = std::mt19937_64;
+  using engine_t = std::minstd_rand0;
   using pool_t = std::vector< std::thread >;
 
-  engine_t makeEngine(std::size_t seed, std::size_t stream)
-  {
-    const unsigned int word_bits = 32;
-    const std::uint64_t wide_seed = seed;
-    const std::uint64_t wide_stream = stream;
-    std::seed_seq sequence{wide_seed, wide_seed >> word_bits, wide_stream, wide_stream >> word_bits};
-    return engine_t(sequence);
-  }
-
   void countHits(const pozdnyakov::circles_t& circles, const pozdnyakov::rectangle_t& frame, std::size_t tries,
-      engine_t engine, hits_t& hits)
+      std::size_t seed, hits_t& hits)
   {
-    const double range = static_cast< double >(engine_t::max());
-    const double width = (frame.right_top.x - frame.left_bottom.x) / range;
-    const double height = (frame.right_top.y - frame.left_bottom.y) / range;
+    engine_t engine(static_cast< engine_t::result_type >(seed));
+    std::uniform_real_distribution< double > abscissa(frame.left_bottom.x, frame.right_top.x);
+    std::uniform_real_distribution< double > ordinate(frame.left_bottom.y, frame.right_top.y);
     hits_t local{0, 0};
     for (std::size_t i = 0; i < tries; ++i)
     {
-      const double x = frame.left_bottom.x + width * static_cast< double >(engine());
-      const double y = frame.left_bottom.y + height * static_cast< double >(engine());
+      const double x = abscissa(engine);
+      const double y = ordinate(engine);
       const pozdnyakov::point_t point{x, y};
       std::size_t owners = 0;
       for (const pozdnyakov::circle_t& circle : circles)
@@ -63,12 +53,7 @@ namespace
 
   std::size_t getWorkers(std::size_t threads, std::size_t tries)
   {
-    std::size_t workers = threads;
-    if (workers == 0)
-    {
-      workers = std::max< std::size_t >(std::thread::hardware_concurrency(), 1);
-    }
-    return std::min(workers, tries);
+    return std::min(std::max< std::size_t >(threads, 1), tries);
   }
 
   std::size_t getShare(std::size_t tries, std::size_t workers, std::size_t index)
@@ -104,9 +89,9 @@ pozdnyakov::areas_t pozdnyakov::computeAreas(const circles_t& circles, const arg
     for (std::size_t i = 1; i < workers; ++i)
     {
       const std::size_t share = getShare(tries, workers, i);
-      pool.emplace_back(countHits, std::cref(circles), std::cref(frame), share, makeEngine(seed, i), std::ref(hits[i]));
+      pool.emplace_back(countHits, std::cref(circles), std::cref(frame), share, seed + i, std::ref(hits[i]));
     }
-    countHits(circles, frame, getShare(tries, workers, 0), makeEngine(seed, 0), hits[0]);
+    countHits(circles, frame, getShare(tries, workers, 0), seed, hits[0]);
   }
   catch (...)
   {
