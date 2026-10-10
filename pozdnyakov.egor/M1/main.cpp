@@ -1,5 +1,7 @@
 #include <exception>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include "arguments.hpp"
 #include "monte-carlo.hpp"
@@ -32,6 +34,7 @@ int main(int argc, char** argv)
     const pozdnyakov::arguments_t args = pozdnyakov::parseArguments(argc, argv);
     const pozdnyakov::circles_t circles = readCircles(std::cin);
     const pozdnyakov::areas_t areas = pozdnyakov::computeAreas(circles, args);
+    std::cout << std::setprecision(std::numeric_limits< double >::max_digits10);
     std::cout << areas.coverage << ' ' << areas.intersection << '\n';
   }
   catch (const std::invalid_argument& error)
