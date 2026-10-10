@@ -3,8 +3,10 @@
 
 #include <cstddef>
 
-namespace pozdnyakov {
-  struct arguments_t {
+namespace pozdnyakov
+{
+  struct arguments_t
+  {
     std::size_t threads;
     std::size_t tries;
     std::size_t seed;

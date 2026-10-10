@@ -4,20 +4,24 @@
 #include <iosfwd>
 #include <vector>
 
-namespace pozdnyakov {
-  struct point_t {
+namespace pozdnyakov
+{
+  struct point_t
+  {
     double x;
     double y;
   };
 
-  struct circle_t {
+  struct circle_t
+  {
     point_t center;
     double radius;
   };
 
-  struct rectangle_t {
-    point_t leftBottom;
-    point_t rightTop;
+  struct rectangle_t
+  {
+    point_t left_bottom;
+    point_t right_top;
   };
 
   using circles_t = std::vector< circle_t >;
