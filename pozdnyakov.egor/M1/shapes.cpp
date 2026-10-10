@@ -33,16 +33,16 @@ pozdnyakov::rectangle_t pozdnyakov::getFrame(const circle_t& circle)
 
 pozdnyakov::rectangle_t pozdnyakov::getFrame(const circles_t& circles)
 {
-  rectangle_t frame = getFrame(circles.front());
+  const rectangle_t first = getFrame(circles.front());
+  double low = std::min(first.left_bottom.x, first.left_bottom.y);
+  double high = std::max(first.right_top.x, first.right_top.y);
   for (const circle_t& circle : circles)
   {
     const rectangle_t next = getFrame(circle);
-    frame.left_bottom.x = std::min(frame.left_bottom.x, next.left_bottom.x);
-    frame.left_bottom.y = std::min(frame.left_bottom.y, next.left_bottom.y);
-    frame.right_top.x = std::max(frame.right_top.x, next.right_top.x);
-    frame.right_top.y = std::max(frame.right_top.y, next.right_top.y);
+    low = std::min({low, next.left_bottom.x, next.left_bottom.y});
+    high = std::max({high, next.right_top.x, next.right_top.y});
   }
-  return frame;
+  return {{low, low}, {high, high}};
 }
 
 double pozdnyakov::getArea(const rectangle_t& rectangle)
